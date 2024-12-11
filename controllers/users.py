@@ -6,6 +6,14 @@ from models.users import UserModel
 
 db = mongo_client.get_database()
 
+def hash_password(password: str) -> str:
+    """
+    Hashea la contraseña del usuario.
+    TODO: Implementar un algoritmo de hash seguro.
+    """
+    return password
+
+
 # Función para validar correos electrónicos
 def validate_email(email: str) -> bool:
     """
@@ -60,6 +68,7 @@ async def user_login_controller(login_data: dict):
     """
     email = login_data.get("email")
     password = login_data.get("password")
+    # TODO hace falta decifrar la contraseña
 
     if not email or not password:
         raise HTTPException(status_code=400, detail="Correo y contraseña son obligatorios")
