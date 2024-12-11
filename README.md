@@ -55,4 +55,4 @@ The backend migration is currently in progress. The following functionalities ha
 │   │   ├── __init__.py
 │   │   └── database.py     # MongoDB connection
 ├── .env                     # Environment variables (not included in repo)
-└── README.md                # Project documentation            # Project documentation
+└── README.md                # Project documentation            
