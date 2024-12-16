@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes.users import router as users_router
 from routes.schedules import router as schedules_router
+from routes.events import router as events_router
 from db.mongo_client import mongo_client
 
 app = FastAPI()
@@ -27,6 +28,7 @@ async def shutdown_event():
 # Registrar rutas
 app.include_router(users_router, prefix="/usuarios", tags=["Usuarios"])
 app.include_router(schedules_router, prefix="/schedules", tags=["Schedules"])
+app.include_router(events_router, prefix="/eventos", tags=["Eventos"])
 
 @app.get("/")
 async def root():
