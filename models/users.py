@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field
 from bson import ObjectId
+from pydantic.class_validators import root_validator
 
 # Clase personalizada para manejar ObjectId
 class PyObjectId(ObjectId):
@@ -31,15 +32,11 @@ class PyObjectId(ObjectId):
 
 # Modelo de usuario
 class UserModel(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)  # Permitir tipos arbitrarios
-
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     email: str
     password: str
     name: str
 
-    def dict(self, **kwargs):
-        """
-        Convierte el modelo a un diccionario, excluyendo el alias '_id' si no es necesario.
-        """
-        return super().dict(by_alias=True, exclude_none=True)
+    class Config:
+        arbitrary_types_allowed = True  # Permitir tipos arbitrarios (como PyObjectId)
+        json_encoders = {PyObjectId: str}  # Convertir ObjectId a string en JSON

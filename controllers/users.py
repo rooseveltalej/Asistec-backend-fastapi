@@ -22,12 +22,6 @@ def validate_email(email: str) -> bool:
     regex = r"^[a-zA-Z0-9._%+-]+@estudiantec\.cr$"
     return bool(re.match(regex, email))
 
-def hash_password(password: str) -> str:
-    """
-    Hashea la contraseña del usuario.
-    """
-    return password
-
 # Controlador para crear un usuario
 async def create_user(user_data: dict):
     """
@@ -55,8 +49,15 @@ async def create_user(user_data: dict):
     try:
         # Crear el usuario
         user = UserModel(**user_data)
-        result = await collection.insert_one(user.dict())
-        return {"message": "Usuario creado correctamente", "id": str(result.inserted_id)}
+        result = await collection.insert_one(user.dict())  # Pydantic manejará la conversión
+        if not result.acknowledged:
+            raise HTTPException(status_code=500, detail="Error al crear el usuario")
+        return {
+            "message": "Usuario creado correctamente",
+            "id": str(result.inserted_id),
+            "email": user.email,
+            "name": user.name
+        }
     except Exception as error:
         print("create_user_controller error:", error)
         raise HTTPException(status_code=500, detail="Error al crear el usuario")
