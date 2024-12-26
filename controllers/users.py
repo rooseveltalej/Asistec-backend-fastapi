@@ -80,7 +80,6 @@ async def user_login_controller(login_data: dict):
     """
     email = login_data.get("email")
     password = login_data.get("password")
-    # TODO hace falta decifrar la contraseña
 
     if not email or not password:
         raise HTTPException(status_code=400, detail="Correo y contraseña son obligatorios")
