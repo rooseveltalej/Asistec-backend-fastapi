@@ -2,16 +2,26 @@ import re
 from fastapi import HTTPException
 from db.mongo_client import mongo_client
 from models.users import UserModel
+import bcrypt
+
 
 
 db = mongo_client.get_database()
 
-def hash_password(password: str) -> str:
+
+def hash_password(plain_password: str) -> str:
     """
-    Hashea la contraseña del usuario.
-    TODO: Implementar un algoritmo de hash seguro.
+    Genera un hash seguro para la contraseña usando bcrypt.
     """
-    return password
+    salt = bcrypt.gensalt()  # Genera una sal aleatoria
+    hashed_password = bcrypt.hashpw(plain_password.encode('utf-8'), salt)
+    return hashed_password.decode('utf-8')
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """
+    Verifica si una contraseña en texto plano coincide con el hash.
+    """
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 
 # Función para validar correos electrónicos
@@ -48,8 +58,9 @@ async def create_user(user_data: dict):
 
     try:
         # Crear el usuario
+        user_data["password"] = hash_password(user_data["password"])
         user = UserModel(**user_data)
-        result = await collection.insert_one(user.dict())  # Pydantic manejará la conversión
+        result = await collection.insert_one(user.dict())
         if not result.acknowledged:
             raise HTTPException(status_code=500, detail="Error al crear el usuario")
         return {
