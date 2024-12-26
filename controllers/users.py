@@ -93,9 +93,9 @@ async def user_login_controller(login_data: dict):
             status_code=400, detail="El usuario no existe. Por favor crea una cuenta"
         )
 
-    # Verificar la contraseña
+    # Verifica la contraseña
     user_model = UserModel(**user)
-    if user_model.verify_password(password):
+    if verify_password(password, user_model.password):  # Verificando la contraseña con bcrypt
         return {"userId": str(user["_id"]), "name": user.get("name")}
     else:
-        raise HTTPException(status_code=403, detail="La contraseña ingresada es incorrecta")
+        raise HTTPException(status_code=403, detail="Incorrect password")
