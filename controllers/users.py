@@ -2,6 +2,7 @@ import re
 from fastapi import HTTPException
 from db.mongo_client import mongo_client
 from models.users import UserModel
+from schemas.users import UserLogin
 import bcrypt
 
 
@@ -60,6 +61,7 @@ async def create_user(user_data: dict):
         # Crear el usuario
         user_data["password"] = hash_password(user_data["password"])
         user = UserModel(**user_data)
+        print("user:", user.dict())
         result = await collection.insert_one(user.dict())
         if not result.acknowledged:
             raise HTTPException(status_code=500, detail="Error al crear el usuario")
@@ -74,7 +76,7 @@ async def create_user(user_data: dict):
         raise HTTPException(status_code=500, detail="Error al crear el usuario")
 
 # Controlador para iniciar sesión
-async def user_login_controller(login_data: dict):
+async def user_login_controller(login_data: UserLogin):
     """
     Verifica las credenciales del usuario.
     """
@@ -92,9 +94,17 @@ async def user_login_controller(login_data: dict):
             status_code=400, detail="El usuario no existe. Por favor crea una cuenta"
         )
 
+    # NOTA IMPORTANTE:
+    # Este bloque de código es una solución temporal para convertir el campo `_id` de MongoDB a un formato aceptable por el modelo `UserModel`.
+    # Idealmente, esta conversión debería realizarse en un lugar más centralizado o a nivel de capa de acceso a datos.
+    # Esto asegura que los modelos Pydantic y la base de datos estén alineados sin requerir transformaciones manuales en cada controlador.
+    # Esta solución se debe refactorizar en el futuro.
+    user["_id"] = str(user["_id"])  # Convertir ObjectId a string
+    user["id"] = user.pop("_id")  # Renombrar `_id` a `id`
+
     # Verifica la contraseña
-    user_model = UserModel(**user)
+    user_model = UserModel(**user)  # Validar contra el modelo
     if verify_password(password, user_model.password):  # Verificando la contraseña con bcrypt
-        return {"userId": str(user["_id"]), "name": user.get("name")}
+        return {"userId": user_model.id, "name": user_model.name}
     else:
-        raise HTTPException(status_code=403, detail="Incorrect password")
+        raise HTTPException(status_code=403, detail="Contraseña incorrecta")

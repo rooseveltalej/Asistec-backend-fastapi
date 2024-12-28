@@ -27,8 +27,6 @@ class PyObjectId(ObjectId):
             raise ValueError("Invalid ObjectId")
         return ObjectId(value)
 
-    def __str__(self):
-        return str(self)
 
 # Modelo de usuario
 class UserModel(BaseModel):
