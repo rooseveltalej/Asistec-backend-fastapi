@@ -105,6 +105,7 @@ async def user_login_controller(login_data: UserLogin):
     # Verifica la contraseña
     user_model = UserModel(**user)  # Validar contra el modelo
     if verify_password(password, user_model.password):  # Verificando la contraseña con bcrypt
-        return {"userId": user_model.id, "name": user_model.name}
+        print("user_model:", user_model)
+        return {"userId": str(user_model.id), "name": user_model.name}
     else:
         raise HTTPException(status_code=403, detail="Contraseña incorrecta")
