@@ -31,9 +31,11 @@ class PyObjectId(ObjectId):
 # Modelo de usuario
 class UserModel(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    name: str
     email: str
     password: str
-    name: str
+
+    
 
     class Config:
         arbitrary_types_allowed = True  # Permitir tipos arbitrarios (como PyObjectId)

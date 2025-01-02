@@ -61,8 +61,9 @@ async def create_user(user_data: dict):
         # Crear el usuario
         user_data["password"] = hash_password(user_data["password"])
         user = UserModel(**user_data)
-        print("user:", user.dict())
-        result = await collection.insert_one(user.dict())
+        user_dict = user.dict()
+        user_dict.pop("id", None)  # Si no existe, no lanza excepción
+        result = await collection.insert_one(user_dict)
         if not result.acknowledged:
             raise HTTPException(status_code=500, detail="Error al crear el usuario")
         return {
@@ -78,10 +79,10 @@ async def create_user(user_data: dict):
 # Controlador para iniciar sesión
 async def user_login_controller(login_data: UserLogin):
     """
-    Verifica las credenciales del usuario.
+    Verifica las credenciales del usuario y retorna su información básica.
     """
-    email = login_data.get("email")
-    password = login_data.get("password")
+    email = login_data['email']
+    password = login_data['password']
 
     if not email or not password:
         raise HTTPException(status_code=400, detail="Correo y contraseña son obligatorios")
@@ -89,23 +90,16 @@ async def user_login_controller(login_data: UserLogin):
     # Buscar el usuario en la base de datos
     collection = db["users"]
     user = await collection.find_one({"email": email})
+
     if not user:
-        raise HTTPException(
-            status_code=400, detail="El usuario no existe. Por favor crea una cuenta"
-        )
+        raise HTTPException(status_code=400, detail="El usuario no existe. Por favor crea una cuenta.")
 
-    # NOTA IMPORTANTE:
-    # Este bloque de código es una solución temporal para convertir el campo `_id` de MongoDB a un formato aceptable por el modelo `UserModel`.
-    # Idealmente, esta conversión debería realizarse en un lugar más centralizado o a nivel de capa de acceso a datos.
-    # Esto asegura que los modelos Pydantic y la base de datos estén alineados sin requerir transformaciones manuales en cada controlador.
-    # Esta solución se debe refactorizar en el futuro.
-    user["_id"] = str(user["_id"])  # Convertir ObjectId a string
-    user["id"] = user.pop("_id")  # Renombrar `_id` a `id`
+    # Convertir ObjectId a string para que sea serializable
+    user_id = str(user["_id"])
 
-    # Verifica la contraseña
-    user_model = UserModel(**user)  # Validar contra el modelo
-    if verify_password(password, user_model.password):  # Verificando la contraseña con bcrypt
-        print("user_model:", user_model)
-        return {"userId": str(user_model.id), "name": user_model.name}
-    else:
-        raise HTTPException(status_code=403, detail="Contraseña incorrecta")
+    # Verificar la contraseña
+    if not verify_password(password, user["password"]):  # Validando con bcrypt
+        raise HTTPException(status_code=403, detail="Contraseña incorrecta.")
+
+    # Retornar solo los datos necesarios
+    return {"userId": user_id, "name": user["name"]}
